@@ -18,7 +18,7 @@ async function run() {
  const yamlResult = await readYamlFile(`./input/${argv.input}.yaml`);
  const {
   prompts = [],
-  negative: negative_prompt,
+  negative: negative_prompt = '',
   model,
   output: {
    sampler,

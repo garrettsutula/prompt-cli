@@ -3,15 +3,15 @@ export function getRandomListItem<Type>(list: Type[]): Type {
 }
 
 function replaceWildcardkey(prompt: string, wildcardKey: string, wildcardValues: string[]): string {
- const wildcardToken = `__${wildcardKey}__`;
- while (prompt.search(wildcardToken) !== -1) {
-  prompt = prompt.replace(wildcardToken, getRandomListItem(wildcardValues));
+ while (prompt.search(wildcardKey) !== -1) {
+  prompt = prompt.replace(wildcardKey, getRandomListItem(wildcardValues));
  }
  return prompt;
 }
 
 export function replacePromptPlaceholders(prompt: string, wildcards: Map<string, string[]>): string {
- return Array.from(wildcards.entries()).reduce((acc, [wildcardKey, wildcardValues]) => {
-  return replaceWildcardkey(acc, wildcardKey, wildcardValues);
+ const placeHoldersInPrompt = Array.from(new Set(Array.from(prompt.matchAll(/__.*__/g)).map(([token]) => token)).values());
+ return placeHoldersInPrompt.reduce((acc, wildcardKey) => {
+  return replaceWildcardkey(acc, wildcardKey, wildcards.get(wildcardKey) as string[]);
  }, prompt);
 }
