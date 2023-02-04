@@ -1,0 +1,14 @@
+{
+ "extends": "@tsconfig/node16/tsconfig.json",
+ "compilerOptions": {
+  "module": "commonjs",
+  "esModuleInterop": true,
+  "declaration": true,
+  "target": "ES2021",
+  "moduleResolution": "node",
+  "sourceMap": true,
+  "outDir": "dist"
+ },
+ "include": ["src/**/*"],
+ "exclude": ["node_modules", "**/*.spec.ts"]
+}
