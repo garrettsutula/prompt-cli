@@ -48,8 +48,8 @@ const httpsAgent = new Agent({
 export async function generateImage(payload: Txt2ImgPayload, model: string, baseUrl: string) {
    // check for and load model if necessary
    if (model) await loadModel(model, baseUrl);
-   payload.id = uuidv4();
-   payload.seed = getRandomInt();
+   if (!payload.id) payload.id = uuidv4();
+   if (!payload.seed) payload.seed = getRandomInt();
    return axios.post(`${baseUrl}/api/txt2img/generate`, {
       data: payload,
       model,
