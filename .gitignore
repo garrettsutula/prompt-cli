@@ -4,3 +4,5 @@ dist/
 input/**/*.yaml
 output/**/*
 wildcards/**/*
+webui.cert
+webui.key

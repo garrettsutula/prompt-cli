@@ -10,8 +10,11 @@ function replaceWildcardkey(prompt: string, wildcardKey: string, wildcardValues:
 }
 
 export function replacePromptPlaceholders(prompt: string, wildcards: Map<string, string[]>): string {
- const placeHoldersInPrompt = Array.from(new Set(Array.from(prompt.matchAll(/__.*__/g)).map(([token]) => token)).values());
- return placeHoldersInPrompt.reduce((acc, wildcardKey) => {
+ const placeHoldersInPrompt = Array.from(new Set(Array.from(prompt.matchAll(/__[a-zA-Z0-9\/]*__/g)).map(([token]) => token)).values());
+ const replacedPrompt = placeHoldersInPrompt.reduce((acc, wildcardKey) => {
+  if (!wildcards.has(wildcardKey)) throw new Error(`Wildcard key not found in wildcards: ${wildcardKey}`)
   return replaceWildcardkey(acc, wildcardKey, wildcards.get(wildcardKey) as string[]);
  }, prompt);
+ if(replacedPrompt.search('__') !== -1) return replacePromptPlaceholders(replacedPrompt, wildcards);
+ return replacedPrompt;
 }

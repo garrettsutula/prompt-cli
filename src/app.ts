@@ -15,6 +15,7 @@ const argv = yargs(process.argv.slice(2)).options({
 
 
 async function generateImages() {
+  let durations = [];
   const wildcards = await getWildCards();
   let currentIteration = 1;
   const yamlResult = await readYamlFile(`./input/${argv.input}.yaml`);
@@ -35,7 +36,7 @@ async function generateImages() {
    },
   } = yamlResult;
   while (currentIteration - 1 < argv.runs) {
-   await generateImage({
+   const { data } = await generateImage({
     prompt: replacePromptPlaceholders(getRandomListItem(prompts), wildcards),
     negative_prompt: replacePromptPlaceholders(negative_prompt, wildcards),
     width,
@@ -46,6 +47,8 @@ async function generateImages() {
     batch_size
    }, model, argv.baseUrl);
    currentIteration += 1;
+   durations.push(data.time);
+   console.log(`✅ ${currentIteration - 1} / ${argv.runs} - ${(data.time * 1000).toFixed(0)}ms duration (${(durations.reduce((a,b) => a + b, 0) * 1000 / durations.length).toFixed(0)}ms average)`);
   }
 }
 
@@ -60,4 +63,11 @@ function run() {
   }
 }
 
-run();
+run()
+  .then((result) => {
+  console.log(`✅ Operation ${argv.input ? 'txt2img' : 'loadModel'} ran successfully`);
+})
+  .catch((e) => {
+    console.error(JSON.stringify(e));
+    throw new Error(`Error running ${argv.input ? 'txt2img' : 'loadModel'}`);
+  })
