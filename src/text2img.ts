@@ -25,7 +25,7 @@ export type Txt2ImgEnvelope = {
 export async function generateImage(payload: Txt2ImgPayload, model: string) {
    // check for and load model if necessary
 
-   payload.id = payload.prompt.substring(0, 30).replace(/[^a-z0-9]/gi, '_').toLowerCase();
+   payload.id = payload.prompt.substring(0, 30).replace(/[^a-z0-9]/gi, '_').toLowerCase() + Date.now().toString();
    return axios.post('http://localhost:5003/api/txt2img/generate', {
       data: payload,
       model,
