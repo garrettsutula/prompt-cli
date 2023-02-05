@@ -2,6 +2,22 @@ import axios from 'axios';
 import { getRandomInt } from './random';
 import { Agent } from 'https';
 import { readFileSync } from 'fs';
+import { v4 as uuidv4 } from 'uuid';
+
+export enum Sampler {
+   DDIM = 1,
+   DDPM = 2,
+   PNDM = 3,
+   LMSD = 4,
+   EULER = 5,
+   HEUN = 6,
+   EULER_A = 7,
+   DPM_2M = 8,
+   DPM_2S = 9,
+   DPM_SDE = 10,
+   DPM_2S_A_KARRAS = 11,
+   DEIS = 12,
+ }
 
 export type Txt2ImgPayload = {
  id?: string;
@@ -32,7 +48,7 @@ const httpsAgent = new Agent({
 export async function generateImage(payload: Txt2ImgPayload, model: string, baseUrl: string) {
    // check for and load model if necessary
    if (model) await loadModel(model, baseUrl);
-   payload.id = payload.prompt.substring(0, 30).replace(/[^a-z0-9]/gi, '_').toLowerCase() + Date.now().toString();
+   payload.id = uuidv4();
    payload.seed = getRandomInt();
    return axios.post(`${baseUrl}/api/txt2img/generate`, {
       data: payload,
