@@ -9,7 +9,8 @@ import { readYamlFile } from './file';
 const argv = yargs(process.argv.slice(2)).options({
  input: { type: 'string' },
  model: { type: 'string' },
- runs: { type: 'number', default: 10 }
+ runs: { type: 'number', default: 10 },
+ baseUrl: {type: 'string', default: 'https://localhost:5003' }
 }).parseSync();
 
 
@@ -43,7 +44,7 @@ async function generateImages() {
     guidance_scale,
     batch_count,
     batch_size
-   }, model);
+   }, model, argv.baseUrl);
    currentIteration += 1;
   }
 }
@@ -51,7 +52,7 @@ async function generateImages() {
 
 function run() {
   if (argv.model) {
-    return loadModel(argv.model);
+    return loadModel(argv.model, argv.baseUrl);
   } else if (argv.input) {
     return generateImages();
   } else {

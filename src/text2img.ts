@@ -22,11 +22,11 @@ export type Txt2ImgEnvelope = {
  save_image: boolean
 }
 
-export async function generateImage(payload: Txt2ImgPayload, model: string) {
+export async function generateImage(payload: Txt2ImgPayload, model: string, baseUrl: string) {
    // check for and load model if necessary
-
+   await loadModel(model, baseUrl);
    payload.id = payload.prompt.substring(0, 30).replace(/[^a-z0-9]/gi, '_').toLowerCase() + Date.now().toString();
-   return axios.post('http://localhost:5003/api/txt2img/generate', {
+   return axios.post(`${baseUrl}/api/txt2img/generate`, {
       data: payload,
       model,
       scheduler: 7,
@@ -35,15 +35,22 @@ export async function generateImage(payload: Txt2ImgPayload, model: string) {
     });
 }
 
-export async function getLoadedModel() {
-   const response = axios.get('http://localhost:5003/api/models/loaded');
-   return response;
+export async function getLoadedModel(baseUrl: string) {
+   const response: any = await axios.get(`${baseUrl}/api/models/loaded`);
+   if (response['0'] && response['0'].length) return response['0'][0] as string;
 }
 
-export function loadModel(model: string) {
-   return axios.post(`http://localhost:5003/api/models/load?model=${model}&backend=TensorRT`);
+export async function loadModel(model: string, baseUrl: string) {
+   let currentModel = await getLoadedModel(baseUrl);
+   if (currentModel && currentModel !== model) {
+      await unloadModels(baseUrl);
+      currentModel = undefined;
+   }
+   if (!currentModel) {
+      return axios.post(`${baseUrl}/api/models/load?model=${model}&backend=TensorRT`);
+   }
 }
 
-function unloadModels() {
- return axios.post('http://localhost:5003/api/models/unload-all');
+function unloadModels(baseUrl: string) {
+ return axios.post(`${baseUrl}/api/models/unload-all`);
 }
