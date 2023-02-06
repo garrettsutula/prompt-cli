@@ -17,35 +17,85 @@ export enum Sampler {
    DPM_SDE = 10,
    DPM_2S_A_KARRAS = 11,
    DEIS = 12,
- }
+}
+
+export type Txt2ImgInput = {
+   id?: string;
+   seed?: number;
+   prompts: string[];
+   prompt: string;
+   negative: string;
+   model: string;
+   output: {
+      sampler: string;
+      steps: number;
+      width: number,
+      height: number,
+      cfg: number,
+   },
+   batch: {
+      count: number,
+      size: number,
+   }
+}
 
 export type Txt2ImgPayload = {
- id?: string;
- prompt: string;
- negative_prompt: string;
- width: number;
- height: number;
- steps: number;
- guidance_scale: number;
- seed?: number;
- batch_size: number;
- batch_count: number;
+   id?: string;
+   prompt: string;
+   negative_prompt: string;
+   width: number;
+   height: number;
+   steps: number;
+   guidance_scale: number;
+   seed?: number;
+   batch_size: number;
+   batch_count: number;
 }
 
 export type Txt2ImgEnvelope = {
- data: Txt2ImgPayload;
- model: string;
- scheduler: number;
- backend: string;
- autoload: boolean;
- save_image: boolean
+   data: Txt2ImgPayload;
+   model: string;
+   scheduler: number;
+   backend: string;
+   autoload: boolean;
+   save_image: boolean
 }
 
 const httpsAgent = new Agent({
    rejectUnauthorized: false,
 });
 
-export async function generateImage(payload: Txt2ImgPayload, model: string, sampler: string, baseUrl: string) {
+export async function generateImage(input: Txt2ImgInput, baseUrl: string) {
+   const {
+      id,
+      seed,
+      prompt,
+      negative: negative_prompt,
+      model,
+      output: {
+         sampler,
+         steps = 20,
+         width = 512,
+         height = 512,
+         cfg: guidance_scale = 7,
+      },
+      batch: {
+         count: batch_count,
+         size: batch_size,
+      },
+   } = input;
+   const payload: Txt2ImgPayload = {
+      id,
+      seed,
+      prompt,
+      negative_prompt,
+      width,
+      height,
+      steps,
+      guidance_scale,
+      batch_count,
+      batch_size,
+   };
    const scheduler = (<any>Sampler)[sampler] || 7;
    // check for and load model if necessary
    if (model) await loadModel(model, baseUrl);
@@ -57,7 +107,7 @@ export async function generateImage(payload: Txt2ImgPayload, model: string, samp
       scheduler,
       backend: 'TensorRT',
       save_image: true,
-    }, { httpsAgent });
+   }, { httpsAgent });
 }
 
 export async function getLoadedModel(baseUrl: string) {
@@ -72,10 +122,10 @@ export async function loadModel(model: string, baseUrl: string) {
       currentModel = undefined;
    }
    if (!currentModel) {
-      return axios.post(`${baseUrl}/api/models/load?model=${model}&backend=TensorRT`, undefined,{ httpsAgent });
+      return axios.post(`${baseUrl}/api/models/load?model=${model}&backend=TensorRT`, undefined, { httpsAgent });
    }
 }
 
 function unloadModels(baseUrl: string) {
- return axios.post(`${baseUrl}/api/models/unload-all`, undefined, { httpsAgent });
+   return axios.post(`${baseUrl}/api/models/unload-all`, undefined, { httpsAgent });
 }
