@@ -22,7 +22,8 @@
       "properties": {
         "sampler": {
           "type": "string",
-          "default": "7"
+          "default": "EULER_A",
+          "enum": ["DDIM", "DDPM", "PNDM", "LMSD", "EULER", "HEUN", "EULER_A", "DPM_2M", "DPM_2S", "DPM_SDE", "DPM_2S_A_KARRAS", "DEIS"]
         },
         "steps": {
           "type": "integer",

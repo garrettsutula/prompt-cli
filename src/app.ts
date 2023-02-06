@@ -14,15 +14,19 @@ const argv = yargs(process.argv.slice(2)).options({
  model: { type: 'string' },
  runs: { type: 'number', default: 10 },
  baseUrl: {type: 'string', default: 'https://localhost:5003' },
- combo: { type: 'boolean', default: false }
+ combo: { type: 'boolean', default: false },
+ modelTest: {type: 'string'}
 }).parseSync();
 
 
 async function generateImages() {
   let durations = [];
-  const wildcards = await getWildCards();
+  const seed = getRandomInt();
   let currentIteration = 1;
-  const yamlResult = await readYamlFile(`./input/${argv.input}.yaml`);
+
+  const wildcards = await getWildCards();
+  const input = await readYamlFile(`./input/${argv.input}.yaml`);
+
   const {
    prompts = [],
    negative: negative_prompt,
@@ -38,7 +42,7 @@ async function generateImages() {
     count: batch_count,
     size: batch_size,
    },
-  } = yamlResult;
+  } = input;
   while (currentIteration - 1 < argv.runs) {
    const { data } = await generateImage({
     prompt: replacePromptPlaceholders(getRandomListItem(prompts), wildcards),
@@ -49,7 +53,7 @@ async function generateImages() {
     guidance_scale,
     batch_count,
     batch_size,
-   }, model, argv.baseUrl);
+   }, model, sampler, argv.baseUrl);
    currentIteration += 1;
    durations.push(data.time);
    console.log(`✅ ${currentIteration - 1} / ${argv.runs} - ${(data.time * 1000).toFixed(0)}ms duration (${(durations.reduce((a,b) => a + b, 0) * 1000 / durations.length).toFixed(0)}ms average)`);
@@ -59,9 +63,11 @@ async function generateImages() {
 async function comboImages() {
   let durations = [];
   const seed = getRandomInt();
-  const wildcards = await getWildCards();
   let currentIteration = 1;
-  const yamlResult = await readYamlFile(`./input/${argv.input}.yaml`);
+
+  const wildcards = await getWildCards();
+  const input = await readYamlFile(`./input/${argv.input}.yaml`);
+
   const {
    prompts = [],
    negative: negative_prompt,
@@ -77,15 +83,15 @@ async function comboImages() {
     count: batch_count,
     size: batch_size,
    },
-  } = yamlResult;
+  } = input;
 
   const allPositive = prompts.flatMap((prompt: string) => allPossiblePrompts(prompt, wildcards));
-  const allNegative = prompts.flatMap((prompt: string) => allPossiblePrompts(prompt, wildcards));
+  const allNegative = allPossiblePrompts(negative_prompt, wildcards);
 
   const allImagePaylods = allPositive.flatMap((positivePrompt: string) => allNegative.map((negativePrompt: string) => {
     return {
       prompt: positivePrompt,
-      negative: negativePrompt,
+      negative_prompt: negativePrompt,
       width,
       height,
       steps,
@@ -97,13 +103,58 @@ async function comboImages() {
   }))
   console.log(`⚙️ ${allImagePaylods.length} total possible prompts to generate...`);
   for (const payload of allImagePaylods) {
-   const { data } = await generateImage(payload, model, argv.baseUrl);
+   const { data } = await generateImage(payload, model, sampler, argv.baseUrl);
    currentIteration += 1;
    durations.push(data.time);
    console.log(`✅ ${currentIteration - 1} / ${allImagePaylods.length} - ${(data.time * 1000).toFixed(0)}ms duration (${(durations.reduce((a,b) => a + b, 0) * 1000 / durations.length).toFixed(0)}ms average)`);
   }
 }
 
+async function modelTest() {
+  let durations = [];
+  const seed = getRandomInt();
+  let currentIteration = 1;
+
+  const wildcards = await getWildCards();
+  const models = await readYamlFile(`./input/models/${argv.modelTest}.yaml`);
+  const input = await readYamlFile(`./input/${argv.input}.yaml`);
+
+  const {
+    prompts = [],
+    negative: negative_prompt,
+    model,
+    output: {
+     sampler,
+     steps = 20,
+     width = 512,
+     height = 512,
+     cfg: guidance_scale = 7,
+    },
+    batch: {
+     count: batch_count,
+     size: batch_size,
+    },
+   } = input;
+
+  const payload = {
+    prompt: replacePromptPlaceholders(getRandomListItem(prompts), wildcards),
+    negative_prompt: replacePromptPlaceholders(negative_prompt, wildcards),
+    width,
+    height,
+    steps,
+    guidance_scale,
+    batch_count,
+    batch_size,
+    seed,
+   }
+
+   for (const currentModel of models) {
+    const { data } = await generateImage(payload, currentModel, sampler, argv.baseUrl);
+     currentIteration += 1;
+     durations.push(data.time);
+     console.log(`✅ ${currentIteration - 1} / ${argv.runs} - ${(data.time * 1000).toFixed(0)}ms duration (${(durations.reduce((a,b) => a + b, 0) * 1000 / durations.length).toFixed(0)}ms average)`);
+   }
+}
 
 function run() {
   if (argv.model) {
@@ -112,6 +163,9 @@ function run() {
   } else if (argv.combo) {
     console.log(`⚙️ Generating all possible combinations`);
     return comboImages();
+  } else if (argv.modelTest) {
+    console.log(`⚙️ Running model test of ${argv.input} + ${argv.modelTest}`);
+    return modelTest();
   } else if (argv.input) {
     console.log(`⚙️ Generating batch of ${argv.runs} images for ${argv.input}.yaml...`)
     return generateImages();

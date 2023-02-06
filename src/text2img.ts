@@ -45,7 +45,8 @@ const httpsAgent = new Agent({
    rejectUnauthorized: false,
 });
 
-export async function generateImage(payload: Txt2ImgPayload, model: string, baseUrl: string) {
+export async function generateImage(payload: Txt2ImgPayload, model: string, sampler: string, baseUrl: string) {
+   const scheduler = (<any>Sampler)[sampler] || 7;
    // check for and load model if necessary
    if (model) await loadModel(model, baseUrl);
    if (!payload.id) payload.id = uuidv4();
@@ -53,7 +54,7 @@ export async function generateImage(payload: Txt2ImgPayload, model: string, base
    return axios.post(`${baseUrl}/api/txt2img/generate`, {
       data: payload,
       model,
-      scheduler: 7,
+      scheduler,
       backend: 'TensorRT',
       save_image: true,
     }, { httpsAgent });
