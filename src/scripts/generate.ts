@@ -1,12 +1,14 @@
 import { Txt2ImgInput } from "../text2img";
 import { replacePromptPlaceholders, getRandomListItem } from "../prompt";
 import { generateImage } from "../text2img";
+import { randomUUID } from 'crypto';
 
 export async function generateImages(input: Txt2ImgInput, wildcards: Map<string, string[]>, baseUrl: string, runs: number) {
   let durations = [];
   let currentIteration = 1;
 
   input.negative = replacePromptPlaceholders(input.negative, wildcards);
+  input.id = randomUUID();
 
   while (currentIteration - 1 < runs) {
     input.prompt = replacePromptPlaceholders(getRandomListItem(input.prompts), wildcards);

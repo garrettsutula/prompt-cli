@@ -7,7 +7,7 @@ export async function writeImageToDisk(model: string, payload: Txt2ImgPayload, i
 }
 
 export async function getList(path: string): Promise<string[]> {
- return await (await readFile(path)).toString().split('\n');
+ return await (await readFile(path)).toString().split('\n').map((line) => line.replace('\r', ''));
 }
 
 export async function readYamlFile(path: string) {

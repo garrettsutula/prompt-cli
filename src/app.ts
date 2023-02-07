@@ -38,11 +38,14 @@ async function run() {
   }
 }
 
+const start = Date.now();
 run()
   .then(() => {
   console.log(`✅ Operation ran successfully`);
+  console.log(`⏳ Total Duration: ${((Date.now() - start) / 1000).toFixed(0)}s`);
 })
   .catch((e) => {
     console.error(`❌ Error running operation`)
     console.error(e);
+    console.log(`⏳ Total Duration: ${((Date.now() - start) / 1000).toFixed(0)}s`);
 });

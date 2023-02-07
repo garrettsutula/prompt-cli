@@ -1,7 +1,8 @@
-import { Txt2ImgInput } from "../text2img";
+import { getModels, Txt2ImgInput } from "../text2img";
 import { replacePromptPlaceholders, getRandomListItem } from "../prompt";
 import { getRandomInt } from "../random";
 import { generateImage } from "../text2img";
+import { randomUUID } from 'crypto';
 
 export async function modelTest(input: Txt2ImgInput, wildcards: Map<string, string[]>, models: string[], baseUrl: string) {
   let durations = [];
@@ -10,6 +11,14 @@ export async function modelTest(input: Txt2ImgInput, wildcards: Map<string, stri
   input.prompt = replacePromptPlaceholders(getRandomListItem(input.prompts), wildcards),
   input.negative = replacePromptPlaceholders(input.negative, wildcards);
   input.seed = getRandomInt();
+  input.id = randomUUID();
+
+  const availableModels = await getModels(baseUrl);
+
+  if (!models.every((model) => availableModels.includes(model))) {
+    const notAvailable = models.filter((model) => !availableModels.includes(model));
+    throw new Error(`❌ Can't continue, models not available:\n\n${notAvailable.join('\n')}`);
+  }
 
    for (const currentModel of models) {
     input.model = currentModel;

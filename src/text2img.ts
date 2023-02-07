@@ -1,8 +1,7 @@
 import axios from 'axios';
 import { getRandomInt } from './random';
 import { Agent } from 'https';
-import { readFileSync } from 'fs';
-import { v4 as uuidv4 } from 'uuid';
+import { randomUUID } from 'crypto';
 
 export enum Sampler {
    DDIM = 1,
@@ -99,7 +98,7 @@ export async function generateImage(input: Txt2ImgInput, baseUrl: string) {
    const scheduler = (<any>Sampler)[sampler] || 7;
    // check for and load model if necessary
    if (model) await loadModel(model, baseUrl);
-   if (!payload.id) payload.id = uuidv4();
+   if (!payload.id) payload.id = randomUUID();
    if (!payload.seed) payload.seed = getRandomInt();
    return axios.post(`${baseUrl}/api/txt2img/generate`, {
       data: payload,
@@ -115,15 +114,23 @@ export async function getLoadedModel(baseUrl: string) {
    if (data['0'] && data['0'].length) return data['0'][0] as string;
 }
 
+export async function getModels(baseUrl: string) {
+   const { data }: any = await axios.get(`${baseUrl}/api/models/avaliable`, { httpsAgent });
+   return data.filter(({backend}: {backend: string}) => backend === 'TensorRT').map(({ name }: { name: string }) => name);
+}
+
 export async function loadModel(model: string, baseUrl: string) {
+   const start = Date.now();
    let currentModel = await getLoadedModel(baseUrl);
    if (currentModel && currentModel !== model) {
       await unloadModels(baseUrl);
       currentModel = undefined;
    }
    if (!currentModel) {
-      return axios.post(`${baseUrl}/api/models/load?model=${model}&backend=TensorRT`, undefined, { httpsAgent });
+      await axios.post(`${baseUrl}/api/models/load?model=${model}&backend=TensorRT`, undefined, { httpsAgent });
+      console.log(`🔃 Model Load Time: ${((Date.now() - start) / 1000).toFixed(1)}s`);
    }
+   
 }
 
 function unloadModels(baseUrl: string) {

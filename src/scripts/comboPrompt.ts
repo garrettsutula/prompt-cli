@@ -2,15 +2,17 @@ import { getRandomInt } from "../random";
 import { Txt2ImgInput } from "../text2img";
 import { replacePromptPlaceholders } from "../prompt";
 import { generateImage } from "../text2img";
+import { randomUUID } from 'crypto';
 
 export async function comboImages(input: Txt2ImgInput, wildcards: Map<string, string[]>, baseUrl: string) {
   let durations = [];
-  const seed = getRandomInt();
   let currentIteration = 1;
 
   input.negative = replacePromptPlaceholders(input.negative, wildcards);
+  input.id = randomUUID();
+  input.seed = getRandomInt();
 
-  const allPositive = input.prompts.flatMap((prompt: string) => allPossiblePrompts(prompt, wildcards));
+  const allPositive = Array.from(new Set(input.prompts.flatMap((prompt: string) => allPossiblePrompts(prompt, wildcards))).values());
   console.log(`⚙️ ${allPositive.length} total possible prompts to generate...`);
 
   for (const prompt of allPositive) {
