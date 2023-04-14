@@ -34,7 +34,7 @@ async function run() {
   let currentIteration = 1;
 
   console.log('Sending parameters...')
-  //await configureParameters(input.params, argv.baseUrl);
+  await configureParameters(input.params, argv.baseUrl);
 
   input.params.seed = getRandomInt();
   const allPromptsWithDupes: string[] = input.prompts.flatMap((prompt: string): string[] => allPossiblePrompts(prompt, wildcards));
@@ -61,7 +61,7 @@ run()
   console.log(`⏳ Total Duration: ${((Date.now() - start) / 1000).toFixed(0)}s`);
 })
   .catch((e) => {
-    console.error(`❌ Error running operation`)
+    console.error(`❌ Error running operation`);
     console.error(e);
     console.log(`⏳ Total Duration: ${((Date.now() - start) / 1000).toFixed(0)}s`);
 });
