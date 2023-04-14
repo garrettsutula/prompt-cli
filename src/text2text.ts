@@ -3,7 +3,13 @@ const sessionHash = Math.floor(Math.random() * (2 ** 31 - 1) + 1);
 const paramsFnIndex = 6;
 const replyFnIndex = 7;
 
-type Txt2TxtParams = {
+export type Txt2TxtConfig = {
+  prompts: string[];
+  sameSeed: boolean;
+  params: Txt2TxtParams;
+}
+
+export type Txt2TxtParams = {
   max_new_tokens?: number;
   seed?: number;
   temperature?: number;
@@ -72,7 +78,7 @@ export function configureParameters(params: Txt2TxtParams, baseUrl: string): Pro
           sendParameters(queue, data);
           break;
         case 'process_completed':
-          resolve(message?.output?.data[0]);
+          resolve(message);
           break;
         case 'estimation':
         case 'process_starts':
@@ -97,6 +103,7 @@ export function text2text(prompt: string, baseUrl: string): Promise<string> {
 
     queue.on('message', (dataStr) => {
       const message = JSON.parse(dataStr.toString());
+      console.log(message);
       switch (message.msg) {
         case 'send_hash':
           sendSessionHash(queue, replyFnIndex);

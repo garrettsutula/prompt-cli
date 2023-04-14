@@ -1,16 +1,15 @@
 import yargs from 'yargs';
-import { randomUUID } from 'crypto';
 import { writeFile } from 'fs/promises';
-
 
 import { getWildCards } from './wildcards';
 import { readYamlFile } from './file';
 import { getRandomInt } from "./random";
-import { text2text } from './text2text';
+import { Txt2TxtConfig, text2text, configureParameters } from './text2text';
+
 
 const argv = yargs(process.argv.slice(2)).options({
  inputPath: { type: 'string' },
- baseUrl: {type: 'string', default: 'https://localhost:5003' },
+ baseUrl: {type: 'string', default: 'ws://192.168.0.29:7860/queue/join' },
 }).parseSync();
 
 function allPossiblePrompts(prompt: string, wildcards: Map<string, string[]>): string[] {
@@ -29,18 +28,21 @@ function allPossiblePrompts(prompt: string, wildcards: Map<string, string[]>): s
  };
 
 async function run() {
-  const input = await readYamlFile(`./input/${argv.inputPath}.yaml`);
+  const input: Txt2TxtConfig = await readYamlFile(`./input/${argv.inputPath}.yaml`);
   const wildcards = await getWildCards();
   let output = [];
   let currentIteration = 1;
 
-  input.id = randomUUID();
-  input.seed = getRandomInt();
+  console.log('Sending parameters...')
+  //await configureParameters(input.params, argv.baseUrl);
+
+  input.params.seed = getRandomInt();
   const allPromptsWithDupes: string[] = input.prompts.flatMap((prompt: string): string[] => allPossiblePrompts(prompt, wildcards));
   const allPrompts: string[] = Array.from(new Set(allPromptsWithDupes).values());
   console.log(`⚙️ ${allPrompts.length} total possible prompts to generate...`);
 
   for (const prompt of allPrompts) {
+    if (!input.sameSeed) await configureParameters({seed: getRandomInt()}, argv.baseUrl);
     console.log(`⚙️ (${currentIteration}/${allPrompts.length}) - Starting: "${prompt}"`)
     const result = await text2text(prompt, argv.baseUrl);
     currentIteration += 1;

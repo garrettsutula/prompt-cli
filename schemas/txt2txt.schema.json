@@ -13,6 +13,10 @@
     "model": {
       "type": "string"
     },
+    "sameSeed": {
+      "type": "boolean",
+      "default": true
+    },
     "params": {
       "type": "object",
       "properties": {
