@@ -1,6 +1,6 @@
 # yaml-language-server: $schema=../../schemas/txt2txt.schema.json
 prompts:
-  - How many miles are in a __promptExample__
+  - How many miles are in a __wildcardExample__
 params:
   max_new_tokens: 200
   seed: -1
