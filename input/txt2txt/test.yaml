@@ -1,0 +1,23 @@
+# yaml-language-server: $schema=../../schemas/txt2txt.schema.json
+prompts:
+  - test prompt
+params:
+  max_new_tokens: 200
+  seed: -1
+  temperature: 0.7
+  top_p: 0.1
+  top_k: 40
+  typical_p: 1
+  repetition_penalty: 1.18
+  encoder_repetition_penalty: 1
+  no_repeat_ngram_size: 0
+  min_length: 0
+  do_sample: true
+  penalty_alpha: 0
+  num_beams: 1
+  length_penalty: 1
+  early_stopping: false
+  add_bos_token: true
+  ban_bos_token: false
+  truncation_length: 2048
+  custom_stopping_strings: ""
