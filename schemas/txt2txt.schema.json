@@ -1,0 +1,51 @@
+{
+  "$id": "txt2txt.schema.json",
+  "title": "txt2txt prompt",
+  "description": "A list of prompts and related settings.",
+  "type": "object",
+  "properties": {
+    "prompts": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "model": {
+      "type": "string"
+    },
+    "params": {
+      "type": "object",
+      "properties": {
+        "max_new_tokens": { "type": "number", "default": 200 },
+        "seed": { "type": "number", "default": -1 },
+        "temperature": { "type": "number", "default": 0.7 },
+        "top_p": { "type": "number", "default": 0.1 },
+        "top_k": { "type": "number", "default": 40 },
+        "typical_p": { "type": "number", "default": 1 },
+        "repetition_penalty": { "type": "number", "default": 1.18 },
+        "encoder_repetition_penalty": { "type": "number", "default": 1 },
+        "no_repeat_ngram_size": { "type": "number", "default": 0 },
+        "min_length": { "type": "number", "default": 0 },
+        "do_sample": { "type": "boolean", "default": true },
+        "penalty_alpha": { "type": "number", "default": 0 },
+        "num_beams": { "type": "number", "default": 1 },
+        "length_penalty": { "type": "number", "default": 1 },
+        "early_stopping": { "type": "boolean", "default": false },
+        "add_bos_token": { "type": "boolean", "default": true },
+        "ban_bos_token": { "type": "boolean", "default": false },
+        "truncation_length": { "type": "number", "default": 2048 },
+        "custom_stopping_strings": { "type": "string", "default": "" }
+      }
+    },
+    "batch": {
+      "type": "object",
+      "properties": {
+        "count": {
+          "type": "integer"
+        }
+      }
+    }
+  },
+  "required": ["prompts", "params"],
+  "additionalProperties": false
+}

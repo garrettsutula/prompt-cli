@@ -1,41 +1,55 @@
 import yargs from 'yargs';
+import { randomUUID } from 'crypto';
+import { writeFile } from 'fs/promises';
+
 
 import { getWildCards } from './wildcards';
-import { comboImages } from './scripts/comboPrompt';
-import { loadModel } from './text2img';
 import { readYamlFile } from './file';
-import { modelTest } from './scripts/modelTest';
-import { generateImages } from './scripts/generate';
+import { getRandomInt } from "./random";
+import { text2text } from './text2text';
 
 const argv = yargs(process.argv.slice(2)).options({
- input: { type: 'string' },
- model: { type: 'string' },
- runs: { type: 'number', default: 10 },
+ inputPath: { type: 'string' },
  baseUrl: {type: 'string', default: 'https://localhost:5003' },
- combo: { type: 'boolean', default: false },
- modelTest: {type: 'string'}
 }).parseSync();
 
+function allPossiblePrompts(prompt: string, wildcards: Map<string, string[]>): string[] {
+  const matchResults = prompt.match(/__[a-zA-Z0-9\/]*__/);
+  if (matchResults) {
+   const [ nextWildcardKey ] = matchResults;
+   if (!wildcards.has(nextWildcardKey)) throw new Error(`Wildcard key not found in wildcards: ${nextWildcardKey}`);
+   const wildcardValues = wildcards.get(nextWildcardKey) as string[];
+   return wildcardValues.flatMap((wildcardValue) => {
+    const newPrompt = prompt.replace(nextWildcardKey, wildcardValue);
+    if (newPrompt.search(/__[a-zA-Z0-9\/]*__/) !== -1) return allPossiblePrompts(newPrompt, wildcards);
+    else return newPrompt;
+   })
+  }
+  return [ prompt ];
+ };
 
 async function run() {
-  const input = await readYamlFile(`./input/${argv.input}.yaml`);
+  const input = await readYamlFile(`./input/${argv.inputPath}.yaml`);
   const wildcards = await getWildCards();
-  if (argv.model) {
-    console.log(`⚙️ Loading model "${argv.model}...`);
-    return loadModel(input, argv.baseUrl);
-  } else if (argv.combo) {
-    console.log(`⚙️ Generating all possible combinations`);
-    return comboImages(input, wildcards, argv.baseUrl);
-  } else if (argv.modelTest) {
-    console.log(`⚙️ Running model test of ${argv.input} + ${argv.modelTest}`);
-    const models = await readYamlFile(`./input/models/${argv.modelTest}.yaml`);
-    return modelTest(input, wildcards, models, argv.baseUrl);
-  } else if (argv.input) {
-    console.log(`⚙️ Generating batch of ${argv.runs} images for ${argv.input}.yaml...`)
-    return generateImages(input, wildcards, argv.baseUrl, argv.runs);
-  } else {
-    throw new Error(`Args not recognized: ${Object.keys(argv).join(', ')}`);
+  let output = [];
+  let currentIteration = 1;
+
+  input.id = randomUUID();
+  input.seed = getRandomInt();
+  const allPromptsWithDupes: string[] = input.prompts.flatMap((prompt: string): string[] => allPossiblePrompts(prompt, wildcards));
+  const allPrompts: string[] = Array.from(new Set(allPromptsWithDupes).values());
+  console.log(`⚙️ ${allPrompts.length} total possible prompts to generate...`);
+
+  for (const prompt of allPrompts) {
+    console.log(`⚙️ (${currentIteration}/${allPrompts.length}) - Starting: "${prompt}"`)
+    const result = await text2text(prompt, argv.baseUrl);
+    currentIteration += 1;
+    output.push(result);
   }
+
+  await writeFile('./output.txt', output.join('\n\n\n'));
+  console.log(`✅ ${allPrompts.length} prompt outputs generated successfully!!!`);
+
 }
 
 const start = Date.now();

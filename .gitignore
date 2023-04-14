@@ -6,3 +6,5 @@ output/**/*
 wildcards/**/*
 webui.cert
 webui.key
+
+.DS_Store
