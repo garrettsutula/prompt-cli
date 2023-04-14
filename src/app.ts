@@ -8,7 +8,7 @@ import { Txt2TxtConfig, text2text, configureParameters } from './text2text';
 
 
 const argv = yargs(process.argv.slice(2)).options({
- inputPath: { type: 'string' },
+ inputPath: { type: 'string', require: true },
  baseUrl: {type: 'string', default: 'ws://192.168.0.29:7860/queue/join' },
 }).parseSync();
 
@@ -28,7 +28,7 @@ function allPossiblePrompts(prompt: string, wildcards: Map<string, string[]>): s
  };
 
 async function run() {
-  const input: Txt2TxtConfig = await readYamlFile(`./input/${argv.inputPath}.yaml`);
+  const input: Txt2TxtConfig = await readYamlFile(argv.inputPath);
   const wildcards = await getWildCards();
   let output = [];
   let currentIteration = 1;
