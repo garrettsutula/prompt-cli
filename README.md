@@ -1,5 +1,5 @@
-# prompt-magic
-A cli tool for organzing and running prompts agains the [VoltaML Fast Stable Diffusion](https://github.com/VoltaML/voltaML-fast-stable-diffusion) API. 
+# prompt-cli
+A cli tool for organzing and running prompts agains the [VoltaML Fast Stable Diffusion](https://github.com/VoltaML/voltaML-fast-stable-diffusion) API and [Text Generation Web UI](https://github.com/oobabooga/text-generation-webui) websocket API.
 
 ## Project Structure
 ```
