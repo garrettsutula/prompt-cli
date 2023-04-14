@@ -42,7 +42,7 @@ async function run() {
   console.log(`⚙️ ${allPrompts.length} total possible prompts to generate...`);
 
   for (const prompt of allPrompts) {
-    if (!input.sameSeed) await configureParameters({seed: getRandomInt()}, argv.baseUrl);
+    if (!input.sameSeed) await configureParameters(Object.assign(input.params, {seed: getRandomInt()}), argv.baseUrl);
     console.log(`⚙️ (${currentIteration}/${allPrompts.length}) - Starting: "${prompt}"`)
     const result = await text2text(prompt, argv.baseUrl);
     currentIteration += 1;

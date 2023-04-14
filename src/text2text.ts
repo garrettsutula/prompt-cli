@@ -103,7 +103,6 @@ export function text2text(prompt: string, baseUrl: string): Promise<string> {
 
     queue.on('message', (dataStr) => {
       const message = JSON.parse(dataStr.toString());
-      console.log(message);
       switch (message.msg) {
         case 'send_hash':
           sendSessionHash(queue, replyFnIndex);
