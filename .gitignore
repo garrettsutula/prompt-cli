@@ -7,4 +7,5 @@ wildcards/**/*
 webui.cert
 webui.key
 !input/txt2txt/test.yaml
+!wildcards/wildcardExample.txt
 .DS_Store

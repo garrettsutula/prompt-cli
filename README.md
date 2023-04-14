@@ -1,6 +1,8 @@
 # prompt-cli
 A cli tool for organzing and running prompts agains the [VoltaML Fast Stable Diffusion](https://github.com/VoltaML/voltaML-fast-stable-diffusion) API and [Text Generation Web UI](https://github.com/oobabooga/text-generation-webui) websocket API.
 
+🚧 TODO: Currently hacked together to do combinatorial prompt generation for all wildcards in a prompt w/ txt2txt ws api.
+
 ## Project Structure
 ```
 .
@@ -27,3 +29,7 @@ A cli tool for organzing and running prompts agains the [VoltaML Fast Stable Dif
 |-------------------------------------------------------------|----------------------------------|-------------|
 | `--inputPath PATH`                                                  |                                  | Pass the desired prompt configuration e.g. `./input/txt2txt/test.yaml` |
 | `--baseUrl BASE_URL`                                        | `ws://127.0.0.1:7860/queue/join` | the websocket "join" URL |
+
+## Wildcards
+
+Place newline-delimited wildcard txt files in `./wildcards` then in prompts use the syntax `__{filename}__` to replace with a wildcard value.
