@@ -1,6 +1,11 @@
 # yaml-language-server: $schema=../../schemas/txt2txt.schema.json
 prompts:
   - How many miles are in a __wildcardExample__
+models:
+  - llama-7b-4bit
+  - llama-13b-4bit-128g
+  - llama-30b-4bit-128g
+  - gpt4-x-alpaca-13b-native-4bit-128g
 params:
   max_new_tokens: 200
   seed: -1

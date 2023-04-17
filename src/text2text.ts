@@ -1,12 +1,17 @@
 import { WebSocket } from "ws";
+import { getRandomInt } from "./random";
 const sessionHash = Math.floor(Math.random() * (2 ** 31 - 1) + 1);
 const paramsFnIndex = 6;
-const replyFnIndex = 7;
+const replyFnIndex = 34;
 
 export type Txt2TxtConfig = {
   prompts: string[];
-  sameSeed: boolean;
   params: Txt2TxtParams;
+  softPrompt?: string;
+  models?: string[];
+  batch?: {
+    count: number;
+  }
 }
 
 export type Txt2TxtParams = {
@@ -32,6 +37,11 @@ export type Txt2TxtParams = {
 
   [key: string]: string | number | boolean | undefined;
 };
+
+export type PromptResult = {
+  prompt: string,
+  result: string,
+}
 
 // Argument order is determined based upon the order they are defined in the gradio app config shown here: https://github.com/oobabooga/text-generation-webui/blob/28a11f57244f130f346b560cfd78bc0c47351e9a/server.py#L347-L406
 let paramOrder = [
@@ -108,10 +118,10 @@ export function text2text(prompt: string, baseUrl: string): Promise<string> {
           sendSessionHash(queue, replyFnIndex);
           break;
         case 'send_data':
-            sendPrompt(queue, prompt);
+          sendPrompt(queue, prompt);
           break;
         case 'process_completed':
-            resolve(message?.output?.data[0]);
+          resolve(message?.output?.data[0]);
           break;
         case 'estimation':
         case 'process_starts':
@@ -123,6 +133,19 @@ export function text2text(prompt: string, baseUrl: string): Promise<string> {
       }
     });
   })
+}
 
-
+export async function runPrompts(prompts: string[], params: Txt2TxtParams, fixedSeed: boolean = false, baseUrl: string, softPrompt?: string, model?: string): Promise<PromptResult[]> {
+  let currentIteration = 1;
+  let output = [];
+  // TODO: change model if passed
+  for (const basePrompt of prompts) {
+    if (fixedSeed) await configureParameters(Object.assign(params, {seed: getRandomInt()}), baseUrl);
+    const prompt = softPrompt ? softPrompt.replace('__prompt__', basePrompt) : basePrompt;
+    console.log(`⚙️ (${currentIteration}/${prompts.length}) - Starting: "${prompt}"`)
+    const result = await text2text(prompt, baseUrl);
+    currentIteration += 1;
+    output.push({prompt: basePrompt, result: result.replace(prompt, '')});
+  }
+  return output;
 }

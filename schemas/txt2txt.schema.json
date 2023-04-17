@@ -10,12 +10,14 @@
         "type": "string"
       }
     },
-    "model": {
+    "softPrompt": {
       "type": "string"
     },
-    "sameSeed": {
-      "type": "boolean",
-      "default": true
+    "models": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     },
     "params": {
       "type": "object",

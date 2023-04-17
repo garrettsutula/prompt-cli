@@ -1,57 +1,41 @@
 import yargs from 'yargs';
 import { writeFile } from 'fs/promises';
+import path from 'path';
 
-import { getWildCards } from './wildcards';
+import { getWildCards, allPossiblePrompts } from './wildcards';
 import { readYamlFile } from './file';
 import { getRandomInt } from "./random";
-import { Txt2TxtConfig, text2text, configureParameters } from './text2text';
+import { Txt2TxtConfig, runPrompts, configureParameters } from './text2text';
 
 
 const argv = yargs(process.argv.slice(2)).options({
  inputPath: { type: 'string', require: true },
- baseUrl: {type: 'string', default: 'ws://192.168.0.29:7860/queue/join' },
+ baseUrl: { type: 'string', default: 'ws://192.168.0.29:7860/queue/join' },
+ fixedSeed: { type: 'boolean', default: false },
 }).parseSync();
 
-function allPossiblePrompts(prompt: string, wildcards: Map<string, string[]>): string[] {
-  const matchResults = prompt.match(/__[a-zA-Z0-9\/]*__/);
-  if (matchResults) {
-   const [ nextWildcardKey ] = matchResults;
-   if (!wildcards.has(nextWildcardKey)) throw new Error(`Wildcard key not found in wildcards: ${nextWildcardKey}`);
-   const wildcardValues = wildcards.get(nextWildcardKey) as string[];
-   return wildcardValues.flatMap((wildcardValue) => {
-    const newPrompt = prompt.replace(nextWildcardKey, wildcardValue);
-    if (newPrompt.search(/__[a-zA-Z0-9\/]*__/) !== -1) return allPossiblePrompts(newPrompt, wildcards);
-    else return newPrompt;
-   })
-  }
-  return [ prompt ];
- };
 
 async function run() {
   const input: Txt2TxtConfig = await readYamlFile(argv.inputPath);
   const wildcards = await getWildCards();
-  let output = [];
-  let currentIteration = 1;
 
   console.log('Sending parameters...')
   await configureParameters(input.params, argv.baseUrl);
 
   input.params.seed = getRandomInt();
-  const allPromptsWithDupes: string[] = input.prompts.flatMap((prompt: string): string[] => allPossiblePrompts(prompt, wildcards));
-  const allPrompts: string[] = Array.from(new Set(allPromptsWithDupes).values());
+  const allPrompts: string[] = Array.from(new Set(input.prompts.flatMap((prompt) => allPossiblePrompts(prompt, wildcards))).values());
   console.log(`⚙️ ${allPrompts.length} total possible prompts to generate...`);
 
-  for (const prompt of allPrompts) {
-    if (!input.sameSeed) await configureParameters(Object.assign(input.params, {seed: getRandomInt()}), argv.baseUrl);
-    console.log(`⚙️ (${currentIteration}/${allPrompts.length}) - Starting: "${prompt}"`)
-    const result = await text2text(prompt, argv.baseUrl);
-    currentIteration += 1;
-    output.push(result);
+  if (input.models) {
+    for (const model of input.models) {
+      const output = await runPrompts(allPrompts, input.params, argv.fixedSeed, argv.baseUrl, input.softPrompt, model);
+      await writeFile(`./output/${path.basename(argv.inputPath, '.yaml')}-${model}-${Date.now()}.txt`, output.join('\n\n\n'));
+    }
+  } else {
+    const output = await runPrompts(allPrompts, input.params, argv.fixedSeed, argv.baseUrl, input.softPrompt);
+    await writeFile(`./output/${path.basename(argv.inputPath, '.yaml')}-${Date.now()}.txt`, output.join('\n\n\n'));
   }
-
-  await writeFile('./output.txt', output.join('\n\n\n'));
   console.log(`✅ ${allPrompts.length} prompt outputs generated successfully!!!`);
-
 }
 
 const start = Date.now();
